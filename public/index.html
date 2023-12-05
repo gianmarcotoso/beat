@@ -24,7 +24,6 @@
 			}
 
 			function start() {
-				// load script from https://unpkg.com/tone@0.12.29/build/Tone.min.js
 				const script = document.createElement('script')
 				script.src = 'https://unpkg.com/tone@14.8.49/build/Tone.js'
 				script.async = true
@@ -48,6 +47,9 @@
 
 				socket.on('beat', (beat) => {
 					const now = new Date().getTime()
+
+					// This is the drift between the server clock and the client clock
+					// It DOES NOT mean that beats are out of sync
 					const drift = now - beat.start
 					const driftEl = document.getElementById('drift')
 					driftEl.innerHTML = `Drift: ${drift}ms`
