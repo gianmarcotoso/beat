@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Beat!</title>
+		<script src="/socket.io/socket.io.js"></script>
+	</head>
+	<body>
+		<h1>Beat</h1>
+
+		<button onclick="start()">Start</button>
+		<button onclick="stop()">Stop</button>
+
+		<div id="bar"></div>
+		<div id="drift"></div>
+
+		<script>
+			let synth
+			let socket
+
+			function stop() {
+				socket.disconnect()
+			}
+
+			function start() {
+				// load script from https://unpkg.com/tone@0.12.29/build/Tone.min.js
+				const script = document.createElement('script')
+				script.src = 'https://unpkg.com/tone@14.8.49/build/Tone.js'
+				script.async = true
+
+				script.onload = () => {
+					console.log('Tone.js loaded')
+					synth = new Tone.Synth().toDestination()
+				}
+
+				document.head.appendChild(script)
+
+				socket = io()
+
+				socket.on('connect', () => {
+					console.log('connected')
+				})
+
+				socket.on('disconnect', () => {
+					console.log('disconnected')
+				})
+
+				socket.on('beat', (beat) => {
+					const now = new Date().getTime()
+					const drift = now - beat.start
+					const driftEl = document.getElementById('drift')
+					driftEl.innerHTML = `Drift: ${drift}ms`
+				})
+
+				socket.on('bar', (beat) => {
+					const bar = document.getElementById('bar')
+					bar.style.backgroundColor = beat.bar === 1 ? '#79d792' : '#d0f1d9'
+					bar.innerHTML = beat.bar
+
+					if (beat.bar === 1) {
+						synth.triggerAttackRelease('C5', '16n')
+					} else {
+						synth.triggerAttackRelease('C6', '16n')
+					}
+					setTimeout(() => {
+						bar.style.backgroundColor = 'transparent'
+					}, 100)
+				})
+
+				socket.on('error', (error) => {
+					console.log(error)
+				})
+			}
+		</script>
+
+		<style>
+			#bar {
+				transition: background-color 0.1s ease-in-out;
+				height: 256px;
+				width: 256px;
+				background-color: transparent;
+				border: 1px solid #333;
+				margin-top: 20px;
+				margin-bottom: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 32px;
+				font-weight: bold;
+			}
+		</style>
+	</body>
+</html>
